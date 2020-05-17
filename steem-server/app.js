@@ -15,14 +15,23 @@ function rowToObject(row){
 	return {
 		year: row.year,
 		month: row.month,
-		developer: row.developer,
+		day: row.day,
+		gamename: row.gamename,
 		message: row.message,
+		id: row.id,
 	}
 }
 
-app.get('/games/:developer',(request, response) => {
-        const query = 'SELECT year, month, developer, message, id FROM memory WHERE developer = ?';
-        const params = [request.params.developer];
+function rowToObject1(row){
+        return {
+                id: row.id,
+		style: row.style
+        }
+}
+
+app.get('/games/:gamename',(request, response) => {
+        const query = 'SELECT *  FROM memory WHERE gamename = ?';
+        const params = [request.params.gamename];
         connection.query(query, params, (error, rows) => {
                 response.send({
                         ok: true,
@@ -32,8 +41,8 @@ app.get('/games/:developer',(request, response) => {
 });
 
 app.post('/games', (request,response) => {
-	const query = 'INSERT INTO memory(year, month, developer, message) VALUES(?,?,?,?)';
-	const params = [request.body.year, request.body.month, request.body.developer, request.body.message];
+	const query = 'INSERT INTO memory(year, month, day, gamename, message, id) VALUES(?,?,?,?,?,?)';
+	const params = [request.body.year, request.body.month, request.body.day, request.body.gamename, request.body.message, request.body.id];
 	connection.query(query, params, (error, result) => {
 		response.send({
 			ok: true,
@@ -43,8 +52,39 @@ app.post('/games', (request,response) => {
 });
 
 app.patch('/games/:id', (request,response) => {
-        const query = 'UPDATE memory SET year = ?, month = ?, developer = ?, message = ? WHERE id = ?';
-        const params = [request.body.year, request.body.month, request.body.developer, request.body.message, request.params.id];
+        const query = 'UPDATE memory SET year = ?, month = ?, day = ?, gamename = ?, message = ? WHERE id = ?';
+        const params = [request.body.year, request.body.month, request.body.day, request.body.gamename, request.body.message, request.params.id];
+        connection.query(query, params, (error, result) => {
+                response.send({
+                        ok: true,
+                });
+        });
+});
+
+app.get('/tags',(request, response) => {
+        const query = 'SELECT id, style FROM tag';
+        connection.query(query, (error, rows) => {
+                response.send({
+                        ok: true,
+                        tags: rows.map(rowToObject1),
+                });
+        });
+});
+
+app.post('/tags', (request,response) => {
+        const query = 'INSERT INTO tag(id, style) VALUES(?,?)';
+        const params = [request.body.id, request.body.style];
+        connection.query(query, params, (error, result) => {
+                response.send({
+                        ok: true,
+                        id: result.insertId,
+                });
+        });
+});
+
+app.patch('/tags', (request,response) => {
+        const query = 'UPDATE tag SET style = ? WHERE id = ?';
+        const params = [request.body.style, request.params.id];
         connection.query(query, params, (error, result) => {
                 response.send({
                         ok: true,
